@@ -1,171 +1,67 @@
 import random
-import os
+import colorama
+from colorama import Fore, Style
 
+# Initialize colorama for color support on Windows
+colorama.init(autoreset=True)
 
-hint_numbers = []
+def generate_code():
+    """Generate a 3-digit code with unique digits."""
+    digits = list(range(10))
+    code = random.sample(digits, 3)
+    return code
 
-def one_right_IN_place(code):
-		possiveis = [0,1,2,3,4,5,6,7,8,9]
-		lista = []
-		for i in range(len(possiveis)):
-			if possiveis[i] not in code:
-				lista.append(possiveis[i])
+def provide_hint(guess, code):
+    """Provide a hint based on the player's guess."""
+    hint = []
+    correct_in_place = 0
+    correct_out_of_place = 0
 
-		index1 = random.randint(0,2)
-		hint_number = ['x','x','x']
+    # Check for digits that are correct and in the right place
+    for i in range(3):
+        if guess[i] == code[i]:
+            correct_in_place += 1
+            hint.append(f"{Fore.GREEN}{guess[i]} (correct position){Style.RESET_ALL}")
+        elif guess[i] in code:
+            correct_out_of_place += 1
+            hint.append(f"{Fore.YELLOW}{guess[i]} (wrong position){Style.RESET_ALL}")
+        else:
+            hint.append(f"{Fore.RED}{guess[i]} (not in code){Style.RESET_ALL}")
 
-		for i in range(3):
-			if i == index1:
-				hint_number[i] = code[i]
-			else:
-				hint_number[i] = lista[random.randint(0,len(lista)-1)]
+    hint_description = (
+        f"{Fore.GREEN}{correct_in_place} correct in place{Style.RESET_ALL}, "
+        f"{Fore.YELLOW}{correct_out_of_place} correct but in wrong place{Style.RESET_ALL}"
+    )
 
-		
-		global hint_numbers
-		for i in range(3):
-			hint_numbers.append(hint_number[i])
-
-		return hint_number
-
-
-def one_right_OUT_place(code):
-		possiveis = [0,1,2,3,4,5,6,7,8,9]
-		hint_number = []
-		code_index = random.randint(0,2)
-		code_number = code[code_index]
-
-		count = 0
-		removidos = 0
-		while True:
-			if possiveis[count] in code:
-				possiveis.remove(possiveis[count])
-				removidos += 1
-				count -= 1
-			count += 1
-			if removidos == 3:
-				break
-
-
-
-		for i in range(3):
-			if i == code_index:
-				x = code_number
-			else:
-				x = possiveis[random.randint(0,len(possiveis)-1)]
-			hint_number.append(x)
-
-		while hint_number[code_index] == code_number:
-			random.shuffle(hint_number)
-
-		global hint_numbers
-		for i in range(3):
-			hint_numbers.append(hint_number[i])
-		return hint_number
-
-
-def all_wrong(code):
-		possiveis = [0,1,2,3,4,5,6,7,8,9]
-		hint_number = []
-		for i in range(3):
-			possiveis.remove(code[i])
-
-		for i in range(3):
-			x = possiveis[random.randint(0,len(possiveis)-3)]
-			hint_number.append(x)
-			possiveis.remove(x)
-
-		global hint_numbers
-		for i in range(3):
-			hint_numbers.append(hint_number[i])
-
-		return hint_number
-
-
-
-def two_right_OUT_place(code):
-	possiveis = [0,1,2,3,4,5,6,7,8,9]
-	for i in range(3):
-		if possiveis[i] in code:
-			possiveis.remove(possiveis[i])
-
-	code_index_1 = random.randint(0,2)
-	hint_number_1 = code[code_index_1]
-
-	code_index_2 = random.randint(0,2)
-	while code_index_2 == code_index_1:
-		code_index_2 = random.randint(0,2)
-	hint_number_2 = code[code_index_2]
-
-	hint_extra = possiveis[random.randint(0,len(possiveis)-1)]
-
-	hint_number = [hint_number_1,hint_number_2,hint_extra]
-	while (hint_number[code_index_1] == code[code_index_1] or hint_number[code_index_2] == code[code_index_2]):
-		random.shuffle(hint_number)
-	
-	global hint_numbers
-	for i in range(3):
-		hint_numbers.append(hint_number[i])
-
-	return hint_number
-	
-
-def create_code():
-	code = []
-	possiveis = [0,1,2,3,4,5,6,7,8,9]
-	leng = len(possiveis)
-
-	for i in range(3):
-		
-		x = possiveis[random.randint(0,len(possiveis)-1)]
-		possiveis.remove(x)
-		code.append(x)
-
-	return code
+    return hint, hint_description
 
 def create_game():
-		global code
-		code = create_code()
-		hint1 = one_right_IN_place(code)
-		hint2 = all_wrong(code)
-		hint3 = one_right_OUT_place(code)
-		hint4 = two_right_OUT_place(code)
-		hint5 = one_right_OUT_place(code)
+    """Main function to run the guessing game."""
+    code = generate_code()
+    
+    print(f"{Fore.CYAN}A 3-digit code has been generated. Try to guess it!{Style.RESET_ALL}")
+    
+    while True:
+        guess = input(f"{Fore.CYAN}Enter your 3-digit guess: {Style.RESET_ALL}")
 
-		remake = False
-		for i in range(3):
-			if code[i] not in hint_numbers:
-				remake = True
-		if remake:
-			create_game
+        if not guess.isdigit() or len(guess) != 3:
+            print(f"{Fore.RED}Invalid input. Please enter exactly 3 digits.{Style.RESET_ALL}")
+            continue
+        
+        guess = list(map(int, guess))
+        if guess == code:
+            print(f"{Fore.GREEN}Congratulations! You've guessed the code correctly!{Style.RESET_ALL}")
+            break
+        
+        hint, description = provide_hint(guess, code)
+        print(f"Hint: {' | '.join(hint)}")
+        print(f"Summary: {description}\n")
+    
+    print(f"The correct code was: {code}")
+    replay = input(f"{Fore.CYAN}Do you want to play again? (Y/N)\n{Style.RESET_ALL}").lower()
+    if replay == 'y':
+        print("\n" * 30)
+        create_game()
 
-		print(hint2,end=' ')
-		print("Tudo errado")
-		print(hint1,end=' ')
-		print("Um certo no lugar")
-		print(hint3,end=' ')
-		print("Um certo e fora do lugar")
-		print(hint4,end=' ')
-		print("Dois certos e fora do lugar")
-		print(hint5,end=' ')
-		print("Um certo e fora do lugar")
-
-		
-
-
-while True:
-	
-	create_game()
-
-		
-
-
-	cont = input("Digite ENTER para ver o codigo\n")
-	print(f'O código é {code}')
-
-
-	cont = input("Deseja jogar novamente?(S/N)\n")
-	if cont == "n":
-		break
-	else:
-		print("\n" * 30)
-		
+if __name__ == "__main__":
+    create_game()
